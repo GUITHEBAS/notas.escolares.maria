@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Notas Escolares com Salvamento</title>
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#333333" />
+    <link rel="icon" type="image/png" href="icon-192.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Montserrat', sans-serif;
+        background: #f6f6f6;
+        padding: 2rem;
+        color: #333;
+      }
+
+      h1 {
+        text-align: center;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 2rem;
+        font-size: 2rem;
+      }
+
+      .table-wrapper {
+        overflow-x: auto;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        background-color: white;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        min-width: 600px;
+      }
+
+      th, td {
+        padding: 1rem;
+        text-align: center;
+      }
+
+      th {
+        background-color: #34495e;
+        color: white;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+
+      tr:nth-child(even) {
+        background-color: #f2f2f2;
+      }
+
+      tr:hover {
+        background-color: #e8f0fe;
+      }
+
+      input[type="number"] {
+        width: 60px;
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        text-align: center;
+        font-family: 'Montserrat', sans-serif;
+      }
+
+      .resultado {
+        margin-top: 2rem;
+        font-size: 1.2rem;
+        text-align: center;
+      }
+
+      .alerta {
+        color: #e74c3c;
+        font-weight: bold;
+      }
+
+      .ok {
+        color: #27ae60;
+        font-weight: bold;
+      }
+
+      button {
+        margin: 2rem auto 0 auto;
+        display: block;
+        padding: 12px 30px;
+        font-size: 1rem;
+        background-color: #34495e;
+        color: white;
+        border: none;
+        border-radius: 30px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        font-family: 'Montserrat', sans-serif;
+      }
+
+      button:hover {
+        background-color: #e8b15f;
+        color: #2c3e50;
+      }
+
+      /* RESPONSIVIDADE */
+      @media (max-width: 768px) {
+        body {
+          padding: 1rem;
+        }
+
+        h1 {
+          font-size: 1.5rem;
+        }
+
+        th, td {
+          padding: 0.7rem;
+        }
+
+        input[type="number"] {
+          width: 50px;
+        }
+
+        button {
+          padding: 10px 20px;
+          font-size: 0.9rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        h1 {
+          font-size: 1.3rem;
+        }
+
+        input[type="number"] {
+          width: 45px;
+        }
+
+        .resultado {
+          font-size: 1rem;
+        }
+
+        button {
+          width: 100%;
+        }
+      }
+
+      @media (min-width: 1200px) {
+        h1 {
+          font-size: 2.5rem;
+        }
+
+        .resultado {
+          font-size: 1.4rem;
+        }
+
+        button {
+          font-size: 1.1rem;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Notas Escolares</h1>
+
+    <div class="table-wrapper">
+      <table id="tabelaNotas">
+        <thead>
+          <tr>
+            <th>Matéria</th>
+            <th>1º Tri</th>
+            <th>2º Tri</th>
+            <th>3º Tri</th>
+            <th>Total</th>
+            <th>Faltam</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Preenchido via JS -->
+        </tbody>
+      </table>
+    </div>
+
+    <button onclick="limparDados()">Limpar Notas</button>
+    <div class="resultado" id="resultadoGeral"></div>
+
+    <script>
+      const materias = [
+        "Biologia", "Geografia", "História",
+        "Inglês", "Português", "Matemática",
+        "Química", "Sociologia", "Educação financeira", 
+        "Projeto de vida", "Biologia I", "Física I",
+          "Matemática II", "Matemática li"
+      ];
+
+      const tabela = document.querySelector("#tabelaNotas tbody");
+
+      materias.forEach((materia, i) => {
+        const linha = document.createElement("tr");
+        linha.innerHTML = `
+          <td>${materia}</td>
+          <td><input type="number" min="0" max="100" onchange="salvarNotas()" data-materia="${i}" data-tri="0"></td>
+          <td><input type="number" min="0" max="100" onchange="salvarNotas()" data-materia="${i}" data-tri="1"></td>
+          <td><input type="number" min="0" max="100" onchange="salvarNotas()" data-materia="${i}" data-tri="2"></td>
+          <td class="totalMateria">0</td>
+          <td class="faltamMateria">180</td>
+        `;
+        tabela.appendChild(linha);
+      });
+
+      function salvarNotas() {
+        const notas = [];
+        document.querySelectorAll("#tabelaNotas tbody tr").forEach((linha, i) => {
+          const inputs = linha.querySelectorAll("input");
+          const trimestres = Array.from(inputs).map(input => parseFloat(input.value) || 0);
+          notas.push(trimestres);
+        });
+        localStorage.setItem("notasSalvas", JSON.stringify(notas));
+        calcular();
+      }
+
+      function carregarNotas() {
+        const dadosSalvos = JSON.parse(localStorage.getItem("notasSalvas") || "[]");
+
+        dadosSalvos.forEach((trimestres, i) => {
+          trimestres.forEach((valor, j) => {
+            const input = document.querySelector(`input[data-materia="${i}"][data-tri="${j}"]`);
+            if (input) input.value = valor;
+          });
+        });
+
+        calcular();
+      }
+
+      function calcular() {
+        let todasOK = true;
+        const resultado = document.getElementById("resultadoGeral");
+        resultado.innerHTML = "";
+
+        document.querySelectorAll("#tabelaNotas tbody tr").forEach((linha) => {
+          const inputs = linha.querySelectorAll("input");
+          let totalMateria = 0;
+          inputs.forEach(input => {
+            const nota = parseFloat(input.value) || 0;
+            totalMateria += nota;
+          });
+
+          const totalCell = linha.querySelector(".totalMateria");
+          const faltamCell = linha.querySelector(".faltamMateria");
+          const faltam = Math.max(0, 180 - totalMateria);
+
+          totalCell.textContent = totalMateria;
+          faltamCell.textContent = faltam;
+
+          if (totalMateria >= 180) {
+            totalCell.style.color = "#27ae60";
+            faltamCell.style.color = "#27ae60";
+          } else {
+            totalCell.style.color = "#e74c3c";
+            faltamCell.style.color = "#e74c3c";
+            todasOK = false;
+          }
+        });
+
+        if (todasOK) {
+          resultado.className = "resultado ok";
+          resultado.innerHTML = "Parabéns! Você atingiu 180 pontos em TODAS as matérias!";
+        } else {
+          resultado.className = "resultado alerta";
+          resultado.innerHTML = "Ainda há matérias abaixo dos 180 pontos. Continue firme!";
+        }
+      }
+
+      function limparDados() {
+        if (confirm("Tem certeza que quer apagar todas as notas?")) {
+          localStorage.removeItem("notasSalvas");
+          document.querySelectorAll("input").forEach(input => input.value = "");
+          calcular();
+        }
+      }
+
+      carregarNotas();
+    </script>
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js')
+          .then(() => console.log('Service Worker registrado!'))
+          .catch(err => console.error('Erro no SW:', err));
+      }
+    </script>
+  </body>
+</html>
